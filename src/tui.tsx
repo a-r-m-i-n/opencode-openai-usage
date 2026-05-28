@@ -3,9 +3,8 @@ import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createMemo, createSignal } from "solid-js"
 import {
   formatCommandSummary,
-  formatFooter,
-  formatSidebarContent,
   formatRelativeDuration,
+  formatSidebarContent,
   formatWindowLabel,
   getOpenCodeStateDir,
   readUsageState,
@@ -141,7 +140,6 @@ const module = {
       void syncState()
     })
 
-    const footerText = createMemo(() => formatFooter(state()))
     const sidebarText = createMemo(() => formatSidebarContent(state()))
 
     const renderSidebarWindow = (window: UsageWindow | null) => {
@@ -185,9 +183,7 @@ const module = {
     api.slots.register({
       order: -100,
       slots: {
-        home_footer: () => <text>{footerText()}</text>,
         sidebar_content: renderSidebarContent,
-        sidebar_footer: () => <text>{footerText()}</text>,
       },
     })
 

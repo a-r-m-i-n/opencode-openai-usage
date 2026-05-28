@@ -143,29 +143,6 @@ export function buildFailureState(previous: UsageState, error: unknown): UsageSt
   }
 }
 
-export function formatFooter(state: UsageState) {
-  if (state.loading && !state.fetchedAt) {
-    return "OpenAI usage: ..."
-  }
-
-  if (state.error && !state.primary && !state.secondary) {
-    return "OpenAI usage unavailable"
-  }
-
-  const parts = [state.primary, state.secondary]
-    .filter((window): window is UsageWindow => Boolean(window))
-    .map((window) => {
-      const leftPercent = Math.max(0, 100 - window.usedPercent)
-      return `${formatWindowLabel(window.windowDurationMins)}: ${formatPercent(leftPercent)}`
-    })
-
-  if (parts.length === 0) {
-    return state.error ? "OpenAI usage unavailable" : "OpenAI usage: n/a"
-  }
-
-  return parts.join(" | ")
-}
-
 export function formatCommandSummary(state: UsageState) {
   const lines = ["OpenAI usage status"]
 
