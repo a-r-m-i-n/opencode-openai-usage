@@ -6,8 +6,6 @@ import {
   formatFooter,
   formatSidebarContent,
   formatRelativeDuration,
-  formatTime,
-  formatTimestamp,
   formatWindowLabel,
   getOpenCodeStateDir,
   readUsageState,
@@ -18,6 +16,63 @@ export const id = "openai-usage-tui"
 
 const CACHE_SYNC_MS = 5_000
 const DIM_ATTRIBUTES = createTextAttributes({ dim: true })
+const BAR_WIDTH = 20
+const BAR_EMPTY_COLOR = "#6b7280"
+const BAR_LABEL_DARK_COLOR = "#111827"
+const BAR_LABEL_LIGHT_COLOR = "#f9fafb"
+
+function formatRemainingPercent(leftPercent: number) {
+  return Number.isInteger(leftPercent) ? `${leftPercent}%` : `${leftPercent.toFixed(1)}%`
+}
+
+function getBarFillColor(leftPercent: number) {
+  if (leftPercent >= 50) {
+    return "#22c55e"
+  }
+
+  if (leftPercent >= 20) {
+    return "#eab308"
+  }
+
+  return "#ef4444"
+}
+
+function getBarSegments(leftPercent: number, width: number) {
+  const clampedPercent = Math.max(0, Math.min(100, leftPercent))
+  const filled = Math.round((clampedPercent / 100) * width)
+  return {
+    filled: Math.max(0, Math.min(width, filled)),
+    empty: Math.max(0, width - filled),
+  }
+}
+
+function getBarLabelColor(fillColor: string) {
+  return fillColor === "#ef4444" ? BAR_LABEL_LIGHT_COLOR : BAR_LABEL_DARK_COLOR
+}
+
+function renderProgressBar(leftPercent: number) {
+  const barSegments = getBarSegments(leftPercent, BAR_WIDTH)
+  const barFillColor = getBarFillColor(leftPercent)
+  const label = `${formatRemainingPercent(leftPercent)} left`
+  const labelStart = Math.max(0, Math.floor((BAR_WIDTH - label.length) / 2))
+  const labelEnd = labelStart + label.length
+
+  return Array.from({ length: BAR_WIDTH }, (_, index) => {
+    const isFilled = index < barSegments.filled
+    const isLabelCell = index >= labelStart && index < labelEnd
+    const underlyingColor = isFilled ? barFillColor : BAR_EMPTY_COLOR
+
+    if (isLabelCell) {
+      return (
+        <text fg={isFilled ? getBarLabelColor(barFillColor) : BAR_LABEL_LIGHT_COLOR} bg={underlyingColor}>
+          {label[index - labelStart]}
+        </text>
+      )
+    }
+
+    return isFilled ? <text fg={underlyingColor}>█</text> : <text bg={BAR_EMPTY_COLOR}> </text>
+  })
+}
 
 const module = {
   id,
@@ -98,10 +153,11 @@ const module = {
 
       return (
         <box flexDirection="column" gap={0} padding={0} margin={0}>
-          <text>{`${formatWindowLabel(window.windowDurationMins)}: ${Number.isInteger(leftPercent) ? `${leftPercent}%` : `${leftPercent.toFixed(1)}%`} left`}</text>
-          <text attributes={DIM_ATTRIBUTES}>
-            {`Resets in ${formatRelativeDuration(window.resetsAt)} (${formatTimestamp(window.resetsAt)})`}
-          </text>
+          <box flexDirection="row" gap={0} padding={0} margin={0}>
+            <text>{`${formatWindowLabel(window.windowDurationMins)} `}</text>
+            {renderProgressBar(leftPercent)}
+            <text attributes={DIM_ATTRIBUTES}>{` Reset: ${formatRelativeDuration(window.resetsAt)}`}</text>
+          </box>
         </box>
       )
     }
@@ -120,9 +176,6 @@ const module = {
       return (
         <box flexDirection="column" gap={0} padding={0} margin={0}>
           <text>OpenAI Usage</text>
-          {currentState.fetchedAt ? (
-            <text attributes={DIM_ATTRIBUTES}>{`Last update at ${formatTime(currentState.fetchedAt)}`}</text>
-          ) : null}
           {renderSidebarWindow(currentState.primary)}
           {renderSidebarWindow(currentState.secondary)}
         </box>
