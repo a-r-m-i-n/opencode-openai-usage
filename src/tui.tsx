@@ -163,6 +163,10 @@ const module = {
     const renderSidebarContent = () => {
       const currentState = state()
 
+      if (currentState.configured === false) {
+        return null
+      }
+
       if (currentState.error && !currentState.primary && !currentState.secondary) {
         return <text>{sidebarText()}</text>
       }
@@ -188,13 +192,17 @@ const module = {
     })
 
     const unregisterCommand = api.command?.register(() => [
-      {
-        title: "OpenAI Usage",
-        value: "openai-usage.show",
-        description: "Show current OpenAI usage",
-        category: "OpenAI",
-        onSelect: showUsageDialog,
-      },
+      ...(state().configured === false
+        ? []
+        : [
+            {
+              title: "OpenAI Usage",
+              value: "openai-usage.show",
+              description: "Show current OpenAI usage",
+              category: "OpenAI",
+              onSelect: showUsageDialog,
+            },
+          ]),
     ])
 
     api.lifecycle.onDispose(() => {

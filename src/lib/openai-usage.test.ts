@@ -9,8 +9,38 @@ test("extractAccessToken returns oauth access token", () => {
 test("extractAccessToken rejects missing token", () => {
   assert.throws(
     () => __testing.extractAccessToken({ openai: { type: "oauth", access: "" } }),
-    /OpenCode stored an invalid ChatGPT access token\./,
+    error => {
+      assert.equal(__testing.isNotConfiguredError(error), true)
+      assert.match((error as Error).message, /OpenCode has no ChatGPT auth configured\./)
+      return true
+    },
   )
+})
+
+test("extractAccessToken rejects missing auth entry as unconfigured", () => {
+  assert.throws(
+    () => __testing.extractAccessToken({}),
+    error => {
+      assert.equal(__testing.isNotConfiguredError(error), true)
+      return true
+    },
+  )
+})
+
+test("buildUnconfiguredState hides plugin output", () => {
+  assert.deepEqual(__testing.buildUnconfiguredState(), {
+    primary: null,
+    secondary: null,
+    fetchedAt: null,
+    error: null,
+    loading: false,
+    configured: false,
+    rateLimitReachedType: null,
+    accountId: null,
+    userId: null,
+    email: null,
+    planType: null,
+  })
 })
 
 test("normalizeWindow accepts window seconds fallback", () => {

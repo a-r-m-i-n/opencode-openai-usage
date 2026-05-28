@@ -19,6 +19,7 @@ export type UsageState = {
   fetchedAt: string | null
   error: string | null
   loading: boolean
+  configured: boolean | null
   rateLimitReachedType: string | null
   accountId: string | null
   userId: string | null
@@ -41,6 +42,7 @@ export const DEFAULT_USAGE_STATE: UsageState = {
   fetchedAt: null,
   error: null,
   loading: true,
+  configured: null,
   rateLimitReachedType: null,
   accountId: null,
   userId: null,
@@ -91,8 +93,19 @@ export async function writeUsageState(stateDir: string, state: UsageState) {
 }
 
 export async function buildUsageState(stateDir: string): Promise<UsageState> {
-  const auth = await readAuthFile(stateDir)
-  const accessToken = extractAccessToken(auth)
+  let accessToken: string
+
+  try {
+    const auth = await readAuthFile(stateDir)
+    accessToken = extractAccessToken(auth)
+  } catch (error) {
+    if (isNotConfiguredError(error)) {
+      return buildUnconfiguredState()
+    }
+
+    throw error
+  }
+
   const data = await fetchUsagePayload(accessToken)
   const rateLimits = extractRateLimitsPayload(data)
 
@@ -107,6 +120,7 @@ export async function buildUsageState(stateDir: string): Promise<UsageState> {
     fetchedAt: new Date().toISOString(),
     error: null,
     loading: false,
+    configured: true,
     rateLimitReachedType,
     email: normalizeOptionalString(data.email ?? rateLimits.email ?? null),
     accountId: normalizeOptionalString(
@@ -179,6 +193,10 @@ export function formatCommandSummary(state: UsageState) {
 }
 
 export function formatSidebarContent(state: UsageState) {
+  if (state.configured === false) {
+    return ""
+  }
+
   const lines = ["OpenAI Usage", ""]
 
   if (state.error && !state.primary && !state.secondary) {
@@ -235,26 +253,45 @@ function appendSidebarWindowLines(lines: string[], window: UsageWindow | null) {
 
 async function readAuthFile(stateDir: string) {
   const authPath = join(stateDir, AUTH_FILE)
-  const raw = await readFile(authPath, "utf8")
+  let raw: string
+
+  try {
+    raw = await readFile(authPath, "utf8")
+  } catch (error) {
+    if (isMissingFileError(error)) {
+      throw new NotConfiguredError("OpenCode has no ChatGPT auth configured.")
+    }
+
+    throw error
+  }
+
   return JSON.parse(raw) as AuthFile
 }
 
 function extractAccessToken(auth: AuthFile) {
   const provider = auth.openai
   if (!isRecord(provider)) {
-    throw new Error("No OpenAI auth entry found in OpenCode state.")
+    throw new NotConfiguredError("OpenCode has no ChatGPT auth configured.")
   }
 
   const oauth = provider as ProviderAuth
   if (oauth.type !== "oauth") {
-    throw new Error("OpenCode has no ChatGPT OAuth token for the OpenAI account.")
+    throw new NotConfiguredError("OpenCode has no ChatGPT auth configured.")
   }
 
   if (typeof oauth.access !== "string" || oauth.access.length === 0) {
-    throw new Error("OpenCode stored an invalid ChatGPT access token.")
+    throw new NotConfiguredError("OpenCode has no ChatGPT auth configured.")
   }
 
   return oauth.access
+}
+
+function buildUnconfiguredState(): UsageState {
+  return {
+    ...DEFAULT_USAGE_STATE,
+    loading: false,
+    configured: false,
+  }
 }
 
 async function fetchUsagePayload(accessToken: string) {
@@ -340,6 +377,7 @@ function normalizeStoredState(input: Partial<UsageState>): UsageState {
     fetchedAt: normalizeOptionalString(input.fetchedAt ?? null),
     error: normalizeOptionalString(input.error ?? null),
     loading: input.loading === true,
+    configured: typeof input.configured === "boolean" ? input.configured : null,
     rateLimitReachedType: normalizeOptionalString(input.rateLimitReachedType ?? null),
     accountId: normalizeOptionalString(input.accountId ?? null),
     userId: normalizeOptionalString(input.userId ?? null),
@@ -471,6 +509,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
+function isMissingFileError(error: unknown) {
+  return isRecord(error) && error.code === "ENOENT"
+}
+
+function isNotConfiguredError(error: unknown) {
+  return error instanceof NotConfiguredError
+}
+
+class NotConfiguredError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "NotConfiguredError"
+  }
+}
+
 function formatError(error: unknown) {
   if (error instanceof Error && error.message) {
     return error.message
@@ -480,6 +533,8 @@ function formatError(error: unknown) {
 }
 
 export const __testing = {
+  buildUnconfiguredState,
   extractAccessToken,
+  isNotConfiguredError,
   normalizeWindow,
 }
