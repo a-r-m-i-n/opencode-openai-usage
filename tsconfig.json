@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/solid"
+  },
+  "include": [
+    "src",
+    ".opencode/plugins/openai-usage.ts",
+    ".opencode/tui/openai-usage.tsx"
+  ]
+}

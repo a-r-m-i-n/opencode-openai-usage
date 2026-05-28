@@ -5,7 +5,6 @@ import { dirname, join } from "node:path"
 const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage"
 const CACHE_FILE = "storage/openai-usage-cache.json"
 const AUTH_FILE = "auth.json"
-const DEFAULT_STATE_DIR = ".local/share/opencode"
 const FETCH_TIMEOUT_MS = 15_000
 
 export type UsageWindow = {
@@ -50,7 +49,23 @@ export const DEFAULT_USAGE_STATE: UsageState = {
 }
 
 export function getOpenCodeStateDir() {
-  return join(homedir(), DEFAULT_STATE_DIR)
+  const xdgDataHome = process.env.XDG_DATA_HOME
+  if (xdgDataHome) {
+    return join(xdgDataHome, "opencode")
+  }
+
+  if (process.platform === "darwin") {
+    return join(homedir(), "Library", "Application Support", "opencode")
+  }
+
+  if (process.platform === "win32") {
+    const appData = process.env.APPDATA
+    if (appData) {
+      return join(appData, "opencode")
+    }
+  }
+
+  return join(homedir(), ".local", "share", "opencode")
 }
 
 export function getUsageCachePath(stateDir: string) {
@@ -155,7 +170,7 @@ export function formatCommandSummary(state: UsageState) {
   const lines = ["OpenAI usage status"]
 
   if (state.error) {
-    lines.push(`Status: unavailable`)
+    lines.push("Status: unavailable")
     lines.push(`Error: ${state.error}`)
   }
 
@@ -485,4 +500,9 @@ function formatError(error: unknown) {
   }
 
   return "Unknown usage error."
+}
+
+export const __testing = {
+  extractAccessToken,
+  normalizeWindow,
 }

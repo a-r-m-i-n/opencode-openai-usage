@@ -1,0 +1,40 @@
+{
+  "name": "opencode-openai-usage",
+  "version": "0.1.0",
+  "description": "OpenCode plugin that shows ChatGPT/OpenAI usage in the footer, sidebar, and command palette.",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "openai",
+    "chatgpt",
+    "tui"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./tui": "./dist/tui.js"
+  },
+  "scripts": {
+    "build": "tsup ./src/index.ts ./src/tui.tsx --format esm --out-dir dist --clean --external @opencode-ai/plugin --external @opencode-ai/plugin/tui --external @opentui/core --external @opentui/keymap --external @opentui/solid --external solid-js",
+    "test": "node --import tsx --test ./src/lib/openai-usage.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "1.15.10",
+    "@opentui/core": "0.2.16",
+    "@opentui/keymap": "0.2.16",
+    "@opentui/solid": "0.2.16",
+    "solid-js": "1.9.12"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.6",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  }
+}
