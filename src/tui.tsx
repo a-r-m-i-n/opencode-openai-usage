@@ -22,6 +22,7 @@ const BAR_LABEL_DARK_COLOR = "#111827"
 const BAR_LABEL_LIGHT_COLOR = "#f9fafb"
 const SIDEBAR_VERSION_COLOR = "#9ca3af"
 const SIDEBAR_INVERT_KV_KEY = "openai-usage.sidebar.invert"
+const SIDEBAR_VISIBLE_KV_KEY = "openai-usage.sidebar.visible"
 const require = createRequire(import.meta.url)
 const PLUGIN_MANIFEST = readPluginManifest()
 const PACKAGE_NAME = PLUGIN_MANIFEST.name
@@ -113,6 +114,9 @@ const module = {
   tui: async (api, rawOptions) => {
     const stateDir = getOpenCodeStateDir()
     const options = (rawOptions as TuiOptions | undefined) ?? {}
+    const [sidebarVisible, setSidebarVisible] = createSignal(
+      api.kv.get<boolean>(SIDEBAR_VISIBLE_KV_KEY, true) !== false,
+    )
     const [invert, setInvert] = createSignal(api.kv.get<boolean>(SIDEBAR_INVERT_KV_KEY, options.invert === true) === true)
     const [state, setState] = createSignal(await readUsageState(stateDir))
     const [open, setOpen] = createSignal(true)
@@ -154,6 +158,15 @@ const module = {
       api.kv.set(SIDEBAR_INVERT_KV_KEY, nextInvert)
       api.ui.toast({
         message: nextInvert ? "Sidebar now shows usage left." : "Sidebar now shows usage used.",
+      })
+    }
+
+    const toggleSidebarVisibility = () => {
+      const nextVisible = !sidebarVisible()
+      setSidebarVisible(nextVisible)
+      api.kv.set(SIDEBAR_VISIBLE_KV_KEY, nextVisible)
+      api.ui.toast({
+        message: nextVisible ? "Sidebar section is now visible." : "Sidebar section is now hidden.",
       })
     }
 
@@ -234,7 +247,7 @@ const module = {
     const renderSidebarContent = () => {
       const currentState = state()
 
-      if (currentState.configured === false) {
+      if (!sidebarVisible() || currentState.configured === false) {
         return null
       }
 
@@ -254,6 +267,13 @@ const module = {
     })
 
     const unregisterCommand = api.command?.register(() => [
+      {
+        title: sidebarVisible() ? "Hide Sidebar Section" : "Show Sidebar Section",
+        value: "openai-usage.toggle-sidebar-visibility",
+        description: "toggle OpenAI Usage sidebar section",
+        category: "OpenAI Usage",
+        onSelect: toggleSidebarVisibility,
+      },
       ...(state().configured === false
         ? []
         : [

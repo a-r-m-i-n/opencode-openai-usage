@@ -11,13 +11,17 @@ The sidebar panel starts expanded and can be collapsed.
 - fetches usage data from OpenAI Backend API
 - reads the OpenCode OpenAI OAuth token from OpenCode's local state
 - shows usage windows in the collapsible sidebar
-- adds `OpenAI Usage` and `OpenAI Usage: Toggle Sidebar Display` commands to the TUI command list
+- adds `OpenAI Usage`, `OpenAI Usage: Toggle Sidebar Display`, and `OpenAI Usage: Show/Hide Sidebar Section` commands to the TUI command list
 
 ## Screenshots
 
 ### Command Palette
 
 Shows the OpenAI-specific commands added by the plugin.
+
+- `OpenAI Usage`: opens the detailed usage dialog
+- `OpenAI Usage: Toggle Sidebar Display`: switches the sidebar between used quota and remaining quota
+- `OpenAI Usage: Show Sidebar Section` / `OpenAI Usage: Hide Sidebar Section`: toggles the sidebar section and persists the setting across restarts
 
 ![Command palette with OpenAI Usage commands](docs/screenshots/command-palette-openai.png)
 
@@ -103,7 +107,8 @@ src/
 - The plugin depends on OpenCode's locally stored `auth.json` format.
 - The usage endpoint is an internal ChatGPT web endpoint and may change without notice.
 - The plugin caches usage data locally in OpenCode's state directory.
-- The plugin hides its sidebar panel and commands when OpenCode has no OpenAI OAuth account configured.
+- The plugin hides its sidebar panel when OpenCode has no OpenAI OAuth account configured.
+- Usage-specific commands are hidden when OpenCode has no OpenAI OAuth account configured, but the sidebar visibility toggle remains available.
 - The command summary currently includes the account email returned by the upstream endpoint.
 
 ## License
