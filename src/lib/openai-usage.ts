@@ -162,8 +162,8 @@ export function buildFailureState(previous: UsageState, error: unknown): UsageSt
   }
 }
 
-export function formatCommandSummary(state: UsageState, pluginVersion?: string | null) {
-  const lines = ["OpenAI usage status"]
+export function formatCommandSummary(state: UsageState, packageName?: string | null, pluginVersion?: string | null) {
+  const lines = [packageName || "OpenAI usage status"]
   let hasUsageDetails = false
 
   if (pluginVersion) {

@@ -113,35 +113,39 @@ test("formatCommandSummary includes plugin version when provided", () => {
         email: null,
         planType: null,
       },
+      "@a-r-m-i-n/opencode-openai-usage",
       "0.1.0",
     ),
-    "OpenAI usage status\nPlugin version: 0.1.0\n\nStatus: unavailable\nError: Usage data has not been fetched yet.",
+    "@a-r-m-i-n/opencode-openai-usage\nPlugin version: 0.1.0\n\nStatus: unavailable\nError: Usage data has not been fetched yet.",
   )
 })
 
 test("formatCommandSummary puts window labels on their own lines", () => {
   assert.equal(
-    formatCommandSummary({
-      primary: {
-        usedPercent: 37.5,
-        windowDurationMins: 180,
-        resetsAt: "never",
+    formatCommandSummary(
+      {
+        primary: {
+          usedPercent: 37.5,
+          windowDurationMins: 180,
+          resetsAt: "never",
+        },
+        secondary: {
+          usedPercent: 12,
+          windowDurationMins: 15,
+          resetsAt: "later",
+        },
+        fetchedAt: null,
+        error: null,
+        loading: false,
+        configured: true,
+        rateLimitReachedType: null,
+        accountId: null,
+        userId: null,
+        email: null,
+        planType: "plus",
       },
-      secondary: {
-        usedPercent: 12,
-        windowDurationMins: 15,
-        resetsAt: "later",
-      },
-      fetchedAt: null,
-      error: null,
-      loading: false,
-      configured: true,
-      rateLimitReachedType: null,
-      accountId: null,
-      userId: null,
-      email: null,
-      planType: "plus",
-    }),
-    "OpenAI usage status\nPrimary window\n3h: 37.5% used, 62.5% left, resets never\n\nSecondary window\n15m: 12% used, 88% left, resets later\n\nPlan: plus",
+      "@a-r-m-i-n/opencode-openai-usage",
+    ),
+    "@a-r-m-i-n/opencode-openai-usage\nPrimary window\n3h: 37.5% used, 62.5% left, resets never\n\nSecondary window\n15m: 12% used, 88% left, resets later\n\nPlan: plus",
   )
 })

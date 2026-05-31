@@ -270,7 +270,7 @@ const module = {
       {
         title: sidebarVisible() ? "Hide Sidebar Section" : "Show Sidebar Section",
         value: "openai-usage.toggle-sidebar-visibility",
-        description: "toggle OpenAI Usage sidebar section",
+        description: "show/hide sidebar entry",
         category: "OpenAI Usage",
         onSelect: toggleSidebarVisibility,
       },
@@ -280,7 +280,7 @@ const module = {
             {
               title: "View status",
               value: "openai-usage.show",
-              description: "Show data from backend API",
+              description: "from OpenAI's backend API",
               category: "OpenAI Usage",
               onSelect: showUsageDialog,
             },
