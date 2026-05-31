@@ -23,18 +23,23 @@ const BAR_LABEL_LIGHT_COLOR = "#f9fafb"
 const SIDEBAR_VERSION_COLOR = "#9ca3af"
 const SIDEBAR_INVERT_KV_KEY = "openai-usage.sidebar.invert"
 const require = createRequire(import.meta.url)
-const PLUGIN_VERSION = readPluginVersion()
+const PLUGIN_MANIFEST = readPluginManifest()
+const PACKAGE_NAME = PLUGIN_MANIFEST.name
+const PLUGIN_VERSION = PLUGIN_MANIFEST.version
 
 type TuiOptions = {
   invert?: boolean
 }
 
-function readPluginVersion() {
+function readPluginManifest() {
   try {
-    const manifest = require("../package.json") as { version?: unknown }
-    return typeof manifest.version === "string" && manifest.version.length > 0 ? manifest.version : null
+    const manifest = require("../package.json") as { name?: unknown, version?: unknown }
+    return {
+      name: typeof manifest.name === "string" && manifest.name.length > 0 ? manifest.name : null,
+      version: typeof manifest.version === "string" && manifest.version.length > 0 ? manifest.version : null,
+    }
   } catch {
-    return null
+    return { name: null, version: null }
   }
 }
 
@@ -138,7 +143,7 @@ const module = {
       api.ui.dialog.replace(() =>
         api.ui.DialogAlert({
           title: "OpenAI Usage",
-          message: formatCommandSummary(latestState, PLUGIN_VERSION),
+          message: formatCommandSummary(latestState, PACKAGE_NAME, PLUGIN_VERSION),
         }),
       )
     }
@@ -253,17 +258,17 @@ const module = {
         ? []
         : [
             {
-              title: "OpenAI Usage",
+              title: "View status",
               value: "openai-usage.show",
-              description: "Show current OpenAI usage",
-              category: "OpenAI",
+              description: "Show data from backend API",
+              category: "OpenAI Usage",
               onSelect: showUsageDialog,
             },
             {
-              title: "OpenAI Usage: Toggle Sidebar Display",
+              title: "Toggle Display Mode",
               value: "openai-usage.toggle-sidebar-invert",
-              description: "Toggle sidebar between used and left usage",
-              category: "OpenAI",
+              description: "between used/left quota",
+              category: "OpenAI Usage",
               onSelect: toggleSidebarInvert,
             },
           ]),
