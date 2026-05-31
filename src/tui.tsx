@@ -1,12 +1,12 @@
 import { createTextAttributes } from "@opentui/core"
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
-import { createMemo, createSignal } from "solid-js"
+import { createSignal } from "solid-js"
 import {
   formatCommandSummary,
   formatRelativeDuration,
-  formatSidebarContent,
   formatWindowLabel,
   getOpenCodeStateDir,
+  getUsageDisplay,
   readUsageState,
   type UsageWindow,
 } from "./lib/openai-usage.ts"
@@ -19,25 +19,42 @@ const BAR_WIDTH = 20
 const BAR_EMPTY_COLOR = "#6b7280"
 const BAR_LABEL_DARK_COLOR = "#111827"
 const BAR_LABEL_LIGHT_COLOR = "#f9fafb"
+const SIDEBAR_INVERT_KV_KEY = "openai-usage.sidebar.invert"
 
-function formatRemainingPercent(leftPercent: number) {
-  return Number.isInteger(leftPercent) ? `${leftPercent}%` : `${leftPercent.toFixed(1)}%`
+type TuiOptions = {
+  invert?: boolean
 }
 
-function getBarFillColor(leftPercent: number) {
-  if (leftPercent >= 50) {
+function formatPercent(percent: number) {
+  return Number.isInteger(percent) ? `${percent}%` : `${percent.toFixed(1)}%`
+}
+
+function getBarFillColor(percent: number, labelSuffix: "left" | "used") {
+  if (labelSuffix === "used") {
+    if (percent >= 50) {
+      return "#ef4444"
+    }
+
+    if (percent >= 20) {
+      return "#eab308"
+    }
+
     return "#22c55e"
   }
 
-  if (leftPercent >= 20) {
+  if (percent >= 50) {
+    return "#22c55e"
+  }
+
+  if (percent >= 20) {
     return "#eab308"
   }
 
   return "#ef4444"
 }
 
-function getBarSegments(leftPercent: number, width: number) {
-  const clampedPercent = Math.max(0, Math.min(100, leftPercent))
+function getBarSegments(percent: number, width: number) {
+  const clampedPercent = Math.max(0, Math.min(100, percent))
   const filled = Math.round((clampedPercent / 100) * width)
   return {
     filled: Math.max(0, Math.min(width, filled)),
@@ -49,10 +66,10 @@ function getBarLabelColor(fillColor: string) {
   return fillColor === "#ef4444" ? BAR_LABEL_LIGHT_COLOR : BAR_LABEL_DARK_COLOR
 }
 
-function renderProgressBar(leftPercent: number) {
-  const barSegments = getBarSegments(leftPercent, BAR_WIDTH)
-  const barFillColor = getBarFillColor(leftPercent)
-  const label = `${formatRemainingPercent(leftPercent)} left`
+function renderProgressBar(percent: number, labelSuffix: "left" | "used") {
+  const barSegments = getBarSegments(percent, BAR_WIDTH)
+  const barFillColor = getBarFillColor(percent, labelSuffix)
+  const label = `${formatPercent(percent)} ${labelSuffix}`
   const labelStart = Math.max(0, Math.floor((BAR_WIDTH - label.length) / 2))
   const labelEnd = labelStart + label.length
 
@@ -75,9 +92,12 @@ function renderProgressBar(leftPercent: number) {
 
 const module = {
   id,
-  tui: async (api) => {
+  tui: async (api, rawOptions) => {
     const stateDir = getOpenCodeStateDir()
+    const options = (rawOptions as TuiOptions | undefined) ?? {}
+    const [invert, setInvert] = createSignal(api.kv.get<boolean>(SIDEBAR_INVERT_KV_KEY, options.invert === true) === true)
     const [state, setState] = createSignal(await readUsageState(stateDir))
+    const [open, setOpen] = createSignal(true)
     let syncInFlight: Promise<void> | null = null
 
     const syncState = async () => {
@@ -110,6 +130,15 @@ const module = {
       )
     }
 
+    const toggleSidebarInvert = () => {
+      const nextInvert = !invert()
+      setInvert(nextInvert)
+      api.kv.set(SIDEBAR_INVERT_KV_KEY, nextInvert)
+      api.ui.toast({
+        message: nextInvert ? "Sidebar now shows usage left." : "Sidebar now shows usage used.",
+      })
+    }
+
     void syncState()
 
     const timer = setInterval(() => {
@@ -140,22 +169,45 @@ const module = {
       void syncState()
     })
 
-    const sidebarText = createMemo(() => formatSidebarContent(state()))
-
     const renderSidebarWindow = (window: UsageWindow | null) => {
       if (!window) {
         return null
       }
 
-      const leftPercent = Math.max(0, 100 - window.usedPercent)
+      const usageDisplay = getUsageDisplay(window.usedPercent, invert())
 
       return (
         <box flexDirection="column" gap={0} padding={0} margin={0}>
           <box flexDirection="row" gap={0} padding={0} margin={0}>
             <text>{`${formatWindowLabel(window.windowDurationMins)} `}</text>
-            {renderProgressBar(leftPercent)}
+            {renderProgressBar(usageDisplay.percent, usageDisplay.label)}
             <text attributes={DIM_ATTRIBUTES}>{` Reset: ${formatRelativeDuration(window.resetsAt)}`}</text>
           </box>
+        </box>
+      )
+    }
+
+    const renderSidebarHeader = () => (
+      <box flexDirection="row" gap={0} padding={0} margin={0} onMouseDown={() => setOpen(!open())}>
+        <text>{open() ? "▼ OpenAI Usage" : "▶ OpenAI Usage"}</text>
+      </box>
+    )
+
+    const renderSidebarBody = () => {
+      const currentState = state()
+
+      if (currentState.error && !currentState.primary && !currentState.secondary) {
+        return <text>{`Status: unavailable\nError: ${currentState.error}`}</text>
+      }
+
+      if (!currentState.primary && !currentState.secondary) {
+        return <text>Status: waiting for usage data</text>
+      }
+
+      return (
+        <box flexDirection="column" gap={0} padding={0} margin={0}>
+          {renderSidebarWindow(currentState.primary)}
+          {renderSidebarWindow(currentState.secondary)}
         </box>
       )
     }
@@ -167,19 +219,10 @@ const module = {
         return null
       }
 
-      if (currentState.error && !currentState.primary && !currentState.secondary) {
-        return <text>{sidebarText()}</text>
-      }
-
-      if (!currentState.primary && !currentState.secondary) {
-        return <text>{sidebarText()}</text>
-      }
-
       return (
         <box flexDirection="column" gap={0} padding={0} margin={0}>
-          <text>OpenAI Usage</text>
-          {renderSidebarWindow(currentState.primary)}
-          {renderSidebarWindow(currentState.secondary)}
+          {renderSidebarHeader()}
+          {open() ? renderSidebarBody() : null}
         </box>
       )
     }
@@ -201,6 +244,13 @@ const module = {
               description: "Show current OpenAI usage",
               category: "OpenAI",
               onSelect: showUsageDialog,
+            },
+            {
+              title: "OpenAI Usage: Toggle Sidebar Display",
+              value: "openai-usage.toggle-sidebar-invert",
+              description: "Toggle sidebar between used and left usage",
+              category: "OpenAI",
+              onSelect: toggleSidebarInvert,
             },
           ]),
     ])

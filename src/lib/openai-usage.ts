@@ -13,6 +13,11 @@ export type UsageWindow = {
   resetsAt: string
 }
 
+export type UsageDisplay = {
+  percent: number
+  label: "left" | "used"
+}
+
 export type UsageState = {
   primary: UsageWindow | null
   secondary: UsageWindow | null
@@ -225,6 +230,22 @@ export function isUsageStateStale(state: UsageState, maxAgeMs: number) {
   }
 
   return Date.now() - fetchedAt > maxAgeMs
+}
+
+export function getUsageDisplay(usedPercent: number, invert: boolean): UsageDisplay {
+  const clampedUsedPercent = Math.max(0, Math.min(100, usedPercent))
+
+  if (invert) {
+    return {
+      percent: Math.max(0, 100 - clampedUsedPercent),
+      label: "left",
+    }
+  }
+
+  return {
+    percent: clampedUsedPercent,
+    label: "used",
+  }
 }
 
 function appendWindowLines(lines: string[], label: string, window: UsageWindow | null) {
@@ -535,6 +556,7 @@ function formatError(error: unknown) {
 export const __testing = {
   buildUnconfiguredState,
   extractAccessToken,
+  getUsageDisplay,
   isNotConfiguredError,
   normalizeWindow,
 }

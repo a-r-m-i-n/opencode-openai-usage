@@ -2,6 +2,8 @@
 
 OpenCode plugin that reads your ChatGPT account usage and shows it in the TUI footer, sidebar, and command palette.
 
+The sidebar panel starts expanded and can be collapsed.
+
 ## What It Does
 
 - fetches usage data from `https://chatgpt.com/backend-api/wham/usage`
@@ -30,7 +32,7 @@ Add the TUI plugin in `tui.json`:
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["opencode-openai-usage/tui"]
+  "plugin": [["opencode-openai-usage/tui", { "invert": false }]]
 }
 ```
 
@@ -62,6 +64,21 @@ OpenCode auto-loads:
 
 Those files are thin dev-entry wrappers that re-export the real implementation from `src/`.
 
+## TUI Options
+
+The TUI plugin accepts options in `tui.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "plugin": [["opencode-openai-usage/tui", { "invert": true }]]
+}
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `invert` | `false` | Default sidebar mode. `false` shows used quota like `60% used`; `true` shows remaining quota like `40% left`. After the `OpenAI Usage: Toggle Sidebar Display` command is used, the last selected mode is persisted across restarts. |
+
 ## Project Structure
 
 ```text
@@ -81,9 +98,11 @@ src/
 2. Open the repo in OpenCode.
 3. Confirm the footer shows `OpenAI usage: ...` and later current values.
 4. Open the command list and run `OpenAI Usage`.
-5. Switch or remove the OpenAI account and verify the error state is shown.
-6. Run `npm run build`.
-7. Verify `npm pack --dry-run` contains only the publishable package files.
+5. Run `OpenAI Usage: Toggle Sidebar Display` and verify the sidebar switches between `used` and `left` mode.
+6. Restart OpenCode and verify the selected sidebar mode is preserved.
+7. Switch or remove the OpenAI account and verify the error state is shown.
+8. Run `npm run build`.
+9. Verify `npm pack --dry-run` contains only the publishable package files.
 
 ## Notes And Limitations
 

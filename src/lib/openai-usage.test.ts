@@ -70,3 +70,29 @@ test("formatWindowLabel formats common durations", () => {
 test("getOpenCodeStateDir returns a non-empty path", () => {
   assert.ok(getOpenCodeStateDir().length > 0)
 })
+
+test("getUsageDisplay shows used percent when invert is false", () => {
+  assert.deepEqual(__testing.getUsageDisplay(60, false), {
+    percent: 60,
+    label: "used",
+  })
+})
+
+test("getUsageDisplay shows remaining percent when invert is true", () => {
+  assert.deepEqual(__testing.getUsageDisplay(60, true), {
+    percent: 40,
+    label: "left",
+  })
+})
+
+test("getUsageDisplay clamps input to valid percentage range", () => {
+  assert.deepEqual(__testing.getUsageDisplay(120, false), {
+    percent: 100,
+    label: "used",
+  })
+
+  assert.deepEqual(__testing.getUsageDisplay(-20, true), {
+    percent: 100,
+    label: "left",
+  })
+})
