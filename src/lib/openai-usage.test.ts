@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { __testing, formatWindowLabel, getOpenCodeStateDir } from "./openai-usage.ts"
+import { __testing, formatCommandSummary, formatWindowLabel, getOpenCodeStateDir } from "./openai-usage.ts"
 
 test("extractAccessToken returns oauth access token", () => {
   assert.equal(__testing.extractAccessToken({ openai: { type: "oauth", access: "token-123" } }), "token-123")
@@ -95,4 +95,53 @@ test("getUsageDisplay clamps input to valid percentage range", () => {
     percent: 100,
     label: "left",
   })
+})
+
+test("formatCommandSummary includes plugin version when provided", () => {
+  assert.equal(
+    formatCommandSummary(
+      {
+        primary: null,
+        secondary: null,
+        fetchedAt: null,
+        error: null,
+        loading: false,
+        configured: true,
+        rateLimitReachedType: null,
+        accountId: null,
+        userId: null,
+        email: null,
+        planType: null,
+      },
+      "0.1.0",
+    ),
+    "OpenAI usage status\nPlugin version: 0.1.0\n\nStatus: unavailable\nError: Usage data has not been fetched yet.",
+  )
+})
+
+test("formatCommandSummary puts window labels on their own lines", () => {
+  assert.equal(
+    formatCommandSummary({
+      primary: {
+        usedPercent: 37.5,
+        windowDurationMins: 180,
+        resetsAt: "never",
+      },
+      secondary: {
+        usedPercent: 12,
+        windowDurationMins: 15,
+        resetsAt: "later",
+      },
+      fetchedAt: null,
+      error: null,
+      loading: false,
+      configured: true,
+      rateLimitReachedType: null,
+      accountId: null,
+      userId: null,
+      email: null,
+      planType: "plus",
+    }),
+    "OpenAI usage status\nPrimary window\n3h: 37.5% used, 62.5% left, resets never\n\nSecondary window\n15m: 12% used, 88% left, resets later\n\nPlan: plus",
+  )
 })

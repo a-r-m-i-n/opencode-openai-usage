@@ -1,3 +1,4 @@
+import { createRequire } from "node:module"
 import { createTextAttributes } from "@opentui/core"
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createSignal } from "solid-js"
@@ -19,10 +20,22 @@ const BAR_WIDTH = 20
 const BAR_EMPTY_COLOR = "#6b7280"
 const BAR_LABEL_DARK_COLOR = "#111827"
 const BAR_LABEL_LIGHT_COLOR = "#f9fafb"
+const SIDEBAR_VERSION_COLOR = "#9ca3af"
 const SIDEBAR_INVERT_KV_KEY = "openai-usage.sidebar.invert"
+const require = createRequire(import.meta.url)
+const PLUGIN_VERSION = readPluginVersion()
 
 type TuiOptions = {
   invert?: boolean
+}
+
+function readPluginVersion() {
+  try {
+    const manifest = require("../package.json") as { version?: unknown }
+    return typeof manifest.version === "string" && manifest.version.length > 0 ? manifest.version : null
+  } catch {
+    return null
+  }
 }
 
 function formatPercent(percent: number) {
@@ -125,7 +138,7 @@ const module = {
       api.ui.dialog.replace(() =>
         api.ui.DialogAlert({
           title: "OpenAI Usage",
-          message: formatCommandSummary(latestState),
+          message: formatCommandSummary(latestState, PLUGIN_VERSION),
         }),
       )
     }
@@ -190,6 +203,7 @@ const module = {
     const renderSidebarHeader = () => (
       <box flexDirection="row" gap={0} padding={0} margin={0} onMouseDown={() => setOpen(!open())}>
         <text>{open() ? "▼ OpenAI Usage" : "▶ OpenAI Usage"}</text>
+        {PLUGIN_VERSION ? <text fg={SIDEBAR_VERSION_COLOR} attributes={DIM_ATTRIBUTES}>{` ${PLUGIN_VERSION}`}</text> : null}
       </box>
     )
 

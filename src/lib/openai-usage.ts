@@ -162,34 +162,51 @@ export function buildFailureState(previous: UsageState, error: unknown): UsageSt
   }
 }
 
-export function formatCommandSummary(state: UsageState) {
+export function formatCommandSummary(state: UsageState, pluginVersion?: string | null) {
   const lines = ["OpenAI usage status"]
+  let hasUsageDetails = false
+
+  if (pluginVersion) {
+    lines.push(`Plugin version: ${pluginVersion}`)
+    lines.push("")
+  }
 
   if (state.error) {
     lines.push("Status: unavailable")
     lines.push(`Error: ${state.error}`)
+    hasUsageDetails = true
   }
 
-  appendWindowLines(lines, "Primary", state.primary)
-  appendWindowLines(lines, "Secondary", state.secondary)
+  hasUsageDetails = appendWindowLines(lines, "Primary", state.primary) || hasUsageDetails
+
+  if (state.primary && state.secondary) {
+    lines.push("")
+  }
+
+  hasUsageDetails = appendWindowLines(lines, "Secondary", state.secondary) || hasUsageDetails
 
   if (state.rateLimitReachedType) {
     lines.push(`Rate limit reached type: ${state.rateLimitReachedType}`)
+    hasUsageDetails = true
   }
 
   if (state.planType) {
+    lines.push("")
     lines.push(`Plan: ${state.planType}`)
+    hasUsageDetails = true
   }
 
   if (state.email) {
     lines.push(`Account email: ${state.email}`)
+    hasUsageDetails = true
   }
 
   if (state.fetchedAt) {
     lines.push(`Fetched at: ${formatTimestamp(state.fetchedAt)}`)
+    hasUsageDetails = true
   }
 
-  if (lines.length === 1) {
+  if (!hasUsageDetails) {
     lines.push("Status: unavailable")
     lines.push("Error: Usage data has not been fetched yet.")
   }
@@ -250,14 +267,17 @@ export function getUsageDisplay(usedPercent: number, invert: boolean): UsageDisp
 
 function appendWindowLines(lines: string[], label: string, window: UsageWindow | null) {
   if (!window) {
-    return
+    return false
   }
 
   const leftPercent = Math.max(0, 100 - window.usedPercent)
 
+  lines.push(`${label} window`)
   lines.push(
-    `${label} window (${formatWindowLabel(window.windowDurationMins)}): ${formatPercent(window.usedPercent)} used, ${formatPercent(leftPercent)} left, resets ${formatTimestamp(window.resetsAt)}`,
+    `${formatWindowLabel(window.windowDurationMins)}: ${formatPercent(window.usedPercent)} used, ${formatPercent(leftPercent)} left, resets ${formatTimestamp(window.resetsAt)}`,
   )
+
+  return true
 }
 
 function appendSidebarWindowLines(lines: string[], window: UsageWindow | null) {
