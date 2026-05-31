@@ -1,4 +1,4 @@
-# opencode-openai-usage
+# @a-r-m-i-n/opencode-openai-usage
 
 OpenCode plugin that reads your ChatGPT account usage and shows it in the TUI sidebar and command palette.
 
@@ -46,12 +46,16 @@ Left mode:
 
 ## Install From npm
 
+```bash
+npm install @a-r-m-i-n/opencode-openai-usage
+```
+
 Add the runtime plugin in `opencode.json`:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-openai-usage"]
+  "plugin": ["@a-r-m-i-n/opencode-openai-usage"]
 }
 ```
 
@@ -60,7 +64,7 @@ Add the TUI plugin in `tui.json`:
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": [["opencode-openai-usage/tui", { "invert": false }]]
+  "plugin": [["@a-r-m-i-n/opencode-openai-usage/tui", { "invert": false }]]
 }
 ```
 
@@ -73,7 +77,7 @@ The TUI plugin accepts options in `tui.json`:
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": [["opencode-openai-usage/tui", { "invert": true }]]
+  "plugin": [["@a-r-m-i-n/opencode-openai-usage/tui", { "invert": true }]]
 }
 ```
 

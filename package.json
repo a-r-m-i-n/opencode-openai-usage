@@ -1,8 +1,16 @@
 {
-  "name": "opencode-openai-usage",
+  "name": "@a-r-m-i-n/opencode-openai-usage",
   "version": "0.1.0",
   "description": "OpenCode plugin that shows ChatGPT/OpenAI usage in the sidebar and command palette.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/a-r-m-i-n/opencode-openai-usage.git"
+  },
+  "homepage": "https://github.com/a-r-m-i-n/opencode-openai-usage#readme",
+  "bugs": {
+    "url": "https://github.com/a-r-m-i-n/opencode-openai-usage/issues"
+  },
   "type": "module",
   "keywords": [
     "opencode",
