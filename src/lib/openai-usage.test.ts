@@ -97,7 +97,7 @@ test("getUsageDisplay clamps input to valid percentage range", () => {
   })
 })
 
-test("formatCommandSummary includes plugin version when provided", () => {
+test("formatCommandSummary appends plugin metadata after divider", () => {
   assert.equal(
     formatCommandSummary(
       {
@@ -115,8 +115,9 @@ test("formatCommandSummary includes plugin version when provided", () => {
       },
       "@a-r-m-i-n/opencode-openai-usage",
       "0.1.0",
+      "https://github.com/a-r-m-i-n/opencode-openai-usage",
     ),
-    "@a-r-m-i-n/opencode-openai-usage\nPlugin version: 0.1.0\n\nStatus: unavailable\nError: Usage data has not been fetched yet.",
+    "Status: unavailable\nError: Usage data has not been fetched yet.\n\n--------------------------------------------------------\n\nPlugin: @a-r-m-i-n/opencode-openai-usage\nVersion: 0.1.0\n\nhttps://github.com/a-r-m-i-n/opencode-openai-usage",
   )
 })
 
@@ -146,6 +147,6 @@ test("formatCommandSummary puts window labels on their own lines", () => {
       },
       "@a-r-m-i-n/opencode-openai-usage",
     ),
-    "@a-r-m-i-n/opencode-openai-usage\nPrimary window\n3h: 37.5% used, 62.5% left, resets never\n\nSecondary window\n15m: 12% used, 88% left, resets later\n\nPlan: plus",
+    "Primary window\n3h: 37.5% used, 62.5% left, resets never\n\nSecondary window\n15m: 12% used, 88% left, resets later\n\nPlan: plus\n\n--------------------------------------------------------\n\nPlugin: @a-r-m-i-n/opencode-openai-usage",
   )
 })

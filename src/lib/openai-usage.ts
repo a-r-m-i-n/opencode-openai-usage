@@ -6,6 +6,7 @@ const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage"
 const CACHE_FILE = "storage/openai-usage-cache.json"
 const AUTH_FILE = "auth.json"
 const FETCH_TIMEOUT_MS = 15_000
+const COMMAND_SUMMARY_DIVIDER = "-".repeat(56)
 
 export type UsageWindow = {
   usedPercent: number
@@ -162,14 +163,14 @@ export function buildFailureState(previous: UsageState, error: unknown): UsageSt
   }
 }
 
-export function formatCommandSummary(state: UsageState, packageName?: string | null, pluginVersion?: string | null) {
-  const lines = [packageName || "OpenAI usage status"]
+export function formatCommandSummary(
+  state: UsageState,
+  packageName?: string | null,
+  pluginVersion?: string | null,
+  githubUrl?: string | null,
+) {
+  const lines: string[] = []
   let hasUsageDetails = false
-
-  if (pluginVersion) {
-    lines.push(`Plugin version: ${pluginVersion}`)
-    lines.push("")
-  }
 
   if (state.error) {
     lines.push("Status: unavailable")
@@ -209,6 +210,30 @@ export function formatCommandSummary(state: UsageState, packageName?: string | n
   if (!hasUsageDetails) {
     lines.push("Status: unavailable")
     lines.push("Error: Usage data has not been fetched yet.")
+  }
+
+  const pluginLines: string[] = []
+
+  if (packageName) {
+    pluginLines.push(`Plugin: ${packageName}`)
+  }
+
+  if (pluginVersion) {
+    pluginLines.push(`Version: ${pluginVersion}`)
+  }
+
+  if (githubUrl) {
+    if (pluginLines.length > 0) {
+      pluginLines.push("")
+    }
+    pluginLines.push(githubUrl)
+  }
+
+  if (pluginLines.length > 0) {
+    lines.push("")
+    lines.push(COMMAND_SUMMARY_DIVIDER)
+    lines.push("")
+    lines.push(...pluginLines)
   }
 
   return lines.join("\n")

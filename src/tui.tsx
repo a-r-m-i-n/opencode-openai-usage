@@ -27,6 +27,7 @@ const require = createRequire(import.meta.url)
 const PLUGIN_MANIFEST = readPluginManifest()
 const PACKAGE_NAME = PLUGIN_MANIFEST.name
 const PLUGIN_VERSION = PLUGIN_MANIFEST.version
+const PACKAGE_HOMEPAGE = PLUGIN_MANIFEST.homepage
 
 type TuiOptions = {
   invert?: boolean
@@ -34,13 +35,18 @@ type TuiOptions = {
 
 function readPluginManifest() {
   try {
-    const manifest = require("../package.json") as { name?: unknown, version?: unknown }
+    const manifest = require("../package.json") as { name?: unknown, version?: unknown, homepage?: unknown }
+    const homepage = typeof manifest.homepage === "string" && manifest.homepage.length > 0
+      ? manifest.homepage.replace(/#readme$/i, "")
+      : null
+
     return {
       name: typeof manifest.name === "string" && manifest.name.length > 0 ? manifest.name : null,
       version: typeof manifest.version === "string" && manifest.version.length > 0 ? manifest.version : null,
+      homepage,
     }
   } catch {
-    return { name: null, version: null }
+    return { name: null, version: null, homepage: null }
   }
 }
 
@@ -147,7 +153,7 @@ const module = {
       api.ui.dialog.replace(() =>
         api.ui.DialogAlert({
           title: "OpenAI Usage",
-          message: formatCommandSummary(latestState, PACKAGE_NAME, PLUGIN_VERSION),
+          message: formatCommandSummary(latestState, PACKAGE_NAME, PLUGIN_VERSION, PACKAGE_HOMEPAGE),
         }),
       )
     }

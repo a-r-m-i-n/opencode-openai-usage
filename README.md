@@ -23,13 +23,13 @@ Shows the OpenAI-specific commands added by the plugin.
 - `OpenAI Usage: Toggle Sidebar Display`: switches the sidebar between used quota and remaining quota
 - `OpenAI Usage: Show Sidebar Section` / `OpenAI Usage: Hide Sidebar Section`: toggles the sidebar section and persists the setting across restarts
 
-![Command palette with OpenAI Usage commands](docs/screenshots/command-palette-openai.png)
+<img src="docs/screenshots/command-palette-openai.png" alt="Command palette with OpenAI Usage commands" width="800" />
 
 ### Usage Dialog
 
 Shows the detailed usage summary, including the current usage windows and account details returned by the upstream endpoint.
 
-![OpenAI Usage dialog](docs/screenshots/openai-usage-dialog.png)
+<img src="docs/screenshots/openai-usage-dialog.png" alt="OpenAI Usage dialog" width="800" />
 
 ### Sidebar Display Modes
 
@@ -37,11 +37,11 @@ The sidebar can show either used quota or remaining quota.
 
 Used mode:
 
-![Sidebar showing used quota](docs/screenshots/mode-used.png)
+<img src="docs/screenshots/mode-used.png" alt="Sidebar showing used quota" width="800" />
 
 Left mode:
 
-![Sidebar showing remaining quota](docs/screenshots/mode-left.png)
+<img src="docs/screenshots/mode-left.png" alt="Sidebar showing remaining quota" width="800" />
 
 ## Requirements
 
