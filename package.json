@@ -34,14 +34,29 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "1.15.10",
-    "@opentui/core": "0.2.16",
-    "@opentui/keymap": "0.2.16",
-    "@opentui/solid": "0.2.16",
+    "@opencode-ai/plugin": "1.15.10"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.2.15",
+    "@opentui/solid": ">=0.2.15",
     "solid-js": "1.9.12"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/core": {
+      "optional": true
+    },
+    "@opentui/solid": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "esbuild-plugin-solid": "^0.6.0",
+    "@opentui/core": "0.2.16",
+    "@opentui/solid": "0.2.16",
+    "solid-js": "1.9.12",
     "tsup": "^8.3.6",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3"
