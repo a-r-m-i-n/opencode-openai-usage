@@ -1,6 +1,6 @@
 {
   "name": "@a-r-m-i-n/opencode-openai-usage",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "OpenCode plugin that shows ChatGPT/OpenAI usage in the sidebar and command palette.",
   "license": "MIT",
   "repository": {
