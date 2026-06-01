@@ -29,7 +29,7 @@
     "./tui": "./dist/tui.js"
   },
   "scripts": {
-    "build": "tsup ./src/index.ts ./src/tui.tsx --format esm --out-dir dist --clean --external @opencode-ai/plugin --external @opencode-ai/plugin/tui --external @opentui/core --external @opentui/keymap --external @opentui/solid --external solid-js",
+    "build": "tsup",
     "test": "node --import tsx --test ./src/lib/openai-usage.test.ts",
     "prepublishOnly": "npm run build"
   },
@@ -41,6 +41,7 @@
     "solid-js": "1.9.12"
   },
   "devDependencies": {
+    "esbuild-plugin-solid": "^0.6.0",
     "tsup": "^8.3.6",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3"
