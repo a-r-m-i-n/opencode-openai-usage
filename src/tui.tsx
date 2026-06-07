@@ -8,13 +8,16 @@ import {
   formatWindowLabel,
   getOpenCodeStateDir,
   getUsageDisplay,
+  isUsageStateStale,
   readUsageState,
+  refreshUsageState,
   type UsageWindow,
 } from "./lib/openai-usage.ts"
 
 export const id = "openai-usage-tui"
 
 const CACHE_SYNC_MS = 5_000
+const STALE_USAGE_REFRESH_MS = 60_000
 const DIM_ATTRIBUTES = createTextAttributes({ dim: true })
 const BAR_WIDTH = 20
 const BAR_EMPTY_COLOR = "#6b7280"
@@ -127,6 +130,7 @@ const module = {
     const [state, setState] = createSignal(await readUsageState(stateDir))
     const [open, setOpen] = createSignal(true)
     let syncInFlight: Promise<void> | null = null
+    let refreshInFlight: Promise<void> | null = null
 
     const syncState = async () => {
       if (syncInFlight) {
@@ -145,9 +149,40 @@ const module = {
       return syncInFlight
     }
 
-    const showUsageDialog = async () => {
+    const refreshState = async () => {
+      if (refreshInFlight) {
+        return refreshInFlight
+      }
+
+      refreshInFlight = (async () => {
+        try {
+          const nextState = await refreshUsageState(stateDir, state())
+          setState(nextState)
+        } finally {
+          refreshInFlight = null
+        }
+      })()
+
+      return refreshInFlight
+    }
+
+    const ensureFreshState = async () => {
       await syncState()
-      const latestState = state()
+
+      const currentState = state()
+      if (currentState.configured === false) {
+        return currentState
+      }
+
+      if (currentState.error || isUsageStateStale(currentState, STALE_USAGE_REFRESH_MS)) {
+        await refreshState()
+      }
+
+      return state()
+    }
+
+    const showUsageDialog = async () => {
+      const latestState = await ensureFreshState()
       setState(latestState)
 
       api.ui.dialog.replace(() =>
@@ -176,7 +211,7 @@ const module = {
       })
     }
 
-    void syncState()
+    void ensureFreshState()
 
     const timer = setInterval(() => {
       void syncState()
@@ -187,23 +222,35 @@ const module = {
     })
 
     api.event.on("account.added", () => {
-      void syncState()
+      void refreshState()
     })
 
     api.event.on("account.removed", () => {
-      void syncState()
+      void refreshState()
     })
 
     api.event.on("account.switched", () => {
-      void syncState()
+      void refreshState()
     })
 
     api.event.on("session.next.prompted", () => {
-      void syncState()
+      void refreshState()
     })
 
     api.event.on("command.executed", () => {
       void syncState()
+    })
+
+    api.event.on("server.connected", () => {
+      void ensureFreshState()
+    })
+
+    api.event.on("session.created", () => {
+      void ensureFreshState()
+    })
+
+    api.event.on("tui.session.select", () => {
+      void ensureFreshState()
     })
 
     const renderSidebarWindow = (window: UsageWindow | null) => {

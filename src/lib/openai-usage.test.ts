@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { __testing, formatCommandSummary, formatWindowLabel, getOpenCodeStateDir } from "./openai-usage.ts"
+import { __testing, formatCommandSummary, formatWindowLabel, getOpenCodeStateDir, isUsageStateStale } from "./openai-usage.ts"
 
 test("extractAccessToken returns oauth access token", () => {
   assert.equal(__testing.extractAccessToken({ openai: { type: "oauth", access: "token-123" } }), "token-123")
@@ -69,6 +69,44 @@ test("formatWindowLabel formats common durations", () => {
 
 test("getOpenCodeStateDir returns a non-empty path", () => {
   assert.ok(getOpenCodeStateDir().length > 0)
+})
+
+test("isUsageStateStale returns true when data is missing", () => {
+  assert.equal(
+    isUsageStateStale({
+      primary: null,
+      secondary: null,
+      fetchedAt: null,
+      error: null,
+      loading: false,
+      configured: true,
+      rateLimitReachedType: null,
+      accountId: null,
+      userId: null,
+      email: null,
+      planType: null,
+    }, 60_000),
+    true,
+  )
+})
+
+test("isUsageStateStale returns false for recent data", () => {
+  assert.equal(
+    isUsageStateStale({
+      primary: null,
+      secondary: null,
+      fetchedAt: new Date(Date.now() - 30_000).toISOString(),
+      error: null,
+      loading: false,
+      configured: true,
+      rateLimitReachedType: null,
+      accountId: null,
+      userId: null,
+      email: null,
+      planType: null,
+    }, 60_000),
+    false,
+  )
 })
 
 test("getUsageDisplay shows used percent when invert is false", () => {
