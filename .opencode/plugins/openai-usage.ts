@@ -1,1 +1,8 @@
-export { default, id } from "../../src/index.ts"
+import runtimeModule from "../../src/index.ts"
+
+export const id = "openai-usage-dev"
+
+export default {
+  ...runtimeModule,
+  id,
+}

@@ -2,7 +2,7 @@
 
 - This package publishes two plugin entrypoints from `src/`: runtime plugin `src/index.ts` and TUI plugin `src/tui.tsx`.
 - Shared state, fetch, formatting, and auth handling live in `src/lib/openai-usage.ts`; the only automated test is `src/lib/openai-usage.test.ts`.
-- Local OpenCode development does not load `src/` directly. OpenCode auto-loads `.opencode/plugins/openai-usage.ts`, `.opencode/tui/openai-usage.tsx`, and `.opencode/tui.json`; the two code files are thin re-export wrappers over `src/`.
+- Local OpenCode development does not load `src/` directly. OpenCode auto-loads `.opencode/plugins/openai-usage.ts`, `.opencode/tui/openai-usage.tsx`, and `.opencode/tui.json`; those wrappers point at `src/` but override the plugin IDs to avoid collisions with a globally installed package during local development.
 - `.opencode/package.json` exists so the repo-local OpenCode plugin runtime can resolve `@opencode-ai/plugin` during local testing.
 
 # Commands

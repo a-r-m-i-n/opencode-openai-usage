@@ -40,6 +40,7 @@ const PACKAGE_HOMEPAGE = PLUGIN_MANIFEST.homepage
 
 type TuiOptions = {
   invert?: boolean
+  versionLabel?: string
 }
 
 function readPluginManifest() {
@@ -132,6 +133,7 @@ const module = {
     const cacheDir = dirname(cachePath)
     const cacheFileName = basename(cachePath)
     const options = (rawOptions as TuiOptions | undefined) ?? {}
+    const versionLabel = options.versionLabel ?? PLUGIN_VERSION
     const [sidebarVisible, setSidebarVisible] = createSignal(
       api.kv.get<boolean>(SIDEBAR_VISIBLE_KV_KEY, true) !== false,
     )
@@ -322,7 +324,7 @@ const module = {
     const renderSidebarHeader = () => (
       <box flexDirection="row" gap={0} padding={0} margin={0} onMouseDown={() => setOpen(!open())}>
         <text>{open() ? "▼ OpenAI Usage" : "▶ OpenAI Usage"}</text>
-        {PLUGIN_VERSION ? <text fg={SIDEBAR_VERSION_COLOR} attributes={DIM_ATTRIBUTES}>{` ${PLUGIN_VERSION}`}</text> : null}
+        {versionLabel ? <text fg={SIDEBAR_VERSION_COLOR} attributes={DIM_ATTRIBUTES}>{` ${versionLabel}`}</text> : null}
       </box>
     )
 
