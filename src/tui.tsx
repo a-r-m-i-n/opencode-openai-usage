@@ -1,4 +1,7 @@
+import { watch } from "node:fs"
+import { mkdir } from "node:fs/promises"
 import { createRequire } from "node:module"
+import { basename, dirname } from "node:path"
 import { createTextAttributes } from "@opentui/core"
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createSignal } from "solid-js"
@@ -6,6 +9,7 @@ import {
   formatCommandSummary,
   formatRelativeDuration,
   formatWindowLabel,
+  getUsageCachePath,
   getOpenCodeStateDir,
   getUsageDisplay,
   isUsageStateStale,
@@ -17,6 +21,8 @@ import {
 export const id = "openai-usage-tui"
 
 const CACHE_SYNC_MS = 5_000
+const CACHE_WATCH_DELAY_MS = 50
+const COMMAND_SYNC_DELAY_MS = 250
 const STALE_USAGE_REFRESH_MS = 60_000
 const DIM_ATTRIBUTES = createTextAttributes({ dim: true })
 const BAR_WIDTH = 20
@@ -122,6 +128,9 @@ const module = {
   id,
   tui: async (api, rawOptions) => {
     const stateDir = getOpenCodeStateDir()
+    const cachePath = getUsageCachePath(stateDir)
+    const cacheDir = dirname(cachePath)
+    const cacheFileName = basename(cachePath)
     const options = (rawOptions as TuiOptions | undefined) ?? {}
     const [sidebarVisible, setSidebarVisible] = createSignal(
       api.kv.get<boolean>(SIDEBAR_VISIBLE_KV_KEY, true) !== false,
@@ -131,6 +140,7 @@ const module = {
     const [open, setOpen] = createSignal(true)
     let syncInFlight: Promise<void> | null = null
     let refreshInFlight: Promise<void> | null = null
+    let syncTimer: ReturnType<typeof setTimeout> | undefined
 
     const syncState = async () => {
       if (syncInFlight) {
@@ -164,6 +174,17 @@ const module = {
       })()
 
       return refreshInFlight
+    }
+
+    const scheduleSyncState = (delay = CACHE_WATCH_DELAY_MS) => {
+      if (syncTimer) {
+        clearTimeout(syncTimer)
+      }
+
+      syncTimer = setTimeout(() => {
+        syncTimer = undefined
+        void syncState()
+      }, delay)
     }
 
     const ensureFreshState = async () => {
@@ -214,11 +235,34 @@ const module = {
     void ensureFreshState()
 
     const timer = setInterval(() => {
-      void syncState()
+      void ensureFreshState()
     }, CACHE_SYNC_MS)
+
+    let cacheWatcher: ReturnType<typeof watch> | null = null
+
+    try {
+      await mkdir(cacheDir, { recursive: true })
+
+      // The runtime plugin only writes to the shared cache file, so watch it to
+      // keep the sidebar in sync instead of waiting for the next poll.
+      cacheWatcher = watch(cacheDir, { persistent: false }, (_eventType, filename) => {
+        if (filename && filename.toString() !== cacheFileName) {
+          return
+        }
+
+        scheduleSyncState()
+      })
+    } catch {
+      cacheWatcher = null
+    }
 
     api.lifecycle.onDispose(() => {
       clearInterval(timer)
+      cacheWatcher?.close()
+
+      if (syncTimer) {
+        clearTimeout(syncTimer)
+      }
     })
 
     api.event.on("account.added", () => {
@@ -237,8 +281,12 @@ const module = {
       void refreshState()
     })
 
+    api.event.on("session.idle", () => {
+      void refreshState()
+    })
+
     api.event.on("command.executed", () => {
-      void syncState()
+      scheduleSyncState(COMMAND_SYNC_DELAY_MS)
     })
 
     api.event.on("server.connected", () => {
