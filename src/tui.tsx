@@ -66,11 +66,11 @@ function formatPercent(percent: number) {
 
 function getBarFillColor(percent: number, labelSuffix: "left" | "used") {
   if (labelSuffix === "used") {
-    if (percent >= 50) {
+    if (percent >= 80) {
       return "#ef4444"
     }
 
-    if (percent >= 20) {
+    if (percent >= 50) {
       return "#eab308"
     }
 
